@@ -1,26 +1,34 @@
--- Merges multilinestring into one line string
+--1. Merges multilinestring into one line string
+
 SELECT st_asgeojson(st_union(ST_LineMerge(the_geom)))
 from table_name
 where column_name ilike ‘%main st%’
--- ------------------------------------------------------------------------------------------------
--- Select intersected points with a specific polygon
+--------------------------------------------------------------------------------------------------
+
+--2. Select intersected points with a specific polygon
+
 select pts.cartodb_id, pts.the_geom_webmercator
 from point_table as pts, polygon_table as polys
 where st_intersects(pts.the_geom, polys.the_geom) and polys.name ilike '%fairfax%'
--- ------------------------------------------------------------------------------------------------
--- Check if two geometries within the same table intersect
+--------------------------------------------------------------------------------------------------
+
+--3. Check if two geometries within the same table intersect
+
 select st_intersects(l1.the_geom,l2.the_geom)
 from line_table as l1, line_table as l2
 where l1.name ilike '%1st st%' and l2.name ilike '%main st%'
--- ------------------------------------------------------------------------------------------------
--- Spatial join: After running this query, you can export the result as a new postGIS table containing the spatial join
+--------------------------------------------------------------------------------------------------
+
+--4. Spatial join: After running this query, you can export the result as a new postGIS table containing the spatial join
+
 SELECT points.*, polys.name
 FROM point_table as points, polygon_table as polys
 where st_intersects(points.the_geom, polys.the_geom)
--- ------------------------------------------------------------------------------------------------
--- Spatial join: first, you create a new column in the points table, then you update its value based on the intersection
-ALTER TABLE point_table ADD COLUMN value_from_poly_column varchar(50);
+--------------------------------------------------------------------------------------------------
 
+--5. Spatial join: first, you create a new column in the points table, then you update its value based on the intersection
+
+ALTER TABLE point_table ADD COLUMN value_from_poly_column varchar(50);
 update point_table
 set value_from_poly_column = 
 (
@@ -29,19 +37,36 @@ set value_from_poly_column =
   where st_intersects(pnts.the_geom,polys.the_geom)
   and point_table.the_geom = pnts.the_geom
 );
--- ------------------------------------------------------------------------------------------------
--- Calculate how many points intersects with each polygon from an overlaid polygon table
+--------------------------------------------------------------------------------------------------
+
+--6. Calculate how many points intersects with each polygon from an overlaid polygon table
 SELECT polys.name, count(pnts.*)
 FROM point_table as pnts, polygon_table as polys
 where st_intersects(pnts.the_geom, polys.the_geom)
 group by polys.name
 order by count desc
--- ------------------------------------------------------------------------------------------------
--- Update a column value based on the maximum value from two other columns
+--------------------------------------------------------------------------------------------------
+
+--7. Update a column value based on the maximum value from two other columns
 update table_name
 set new_column = 
 case when col1 > col2 then 'some value1'
 	 when col2 > col1 then 'some value2'
 	 else 'N/A'
 end
--- ------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------
+
+--8. Alter table to add a geometry column of type point
+
+alter table table_name add column column_name geometry(Point);
+
+--------------------------------------------------------------------------------------------------
+
+--8. Alter table to add a decimal column for longitude values
+
+alter table table_name add column column_name decimal(10,7);
+
+--------------------------------------------------------------------------------------------------
+--10. Update all table values of a decimal-type-column (decimal(10,7) with the x/longitude value of the_geom
+
+update table_name set lng = st_x(st_centroid(the_geom));

@@ -62,7 +62,7 @@ alter table table_name add column column_name geometry(Point);
 
 --------------------------------------------------------------------------------------------------
 
---8. Alter table to add a decimal column for longitude values
+--9. Alter table to add a decimal column for longitude values
 
 alter table table_name add column column_name decimal(10,7);
 

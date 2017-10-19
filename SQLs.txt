@@ -67,6 +67,11 @@ alter table table_name add column column_name geometry(Point);
 alter table table_name add column column_name decimal(10,7);
 
 --------------------------------------------------------------------------------------------------
---10. Update all table values of a decimal-type-column (decimal(10,7) with the x/longitude value of the_geom
+--10. Update the values of a decimal-type-column (decimal(10,7)) with the x/longitude value of the_geom
 
-update table_name set lng = st_x(st_centroid(the_geom));
+update table_name set column_name = st_x(st_centroid(the_geom));
+
+--------------------------------------------------------------------------------------------------
+--11. Update the values of a varchar-type-column with the bounding box of the_geom
+
+update table_name set column_name = box2d(the_geom); 

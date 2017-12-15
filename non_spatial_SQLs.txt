@@ -1,0 +1,22 @@
+-- Connect to psql through command line
+psql --host=xyz.amazonaws.com --username=some_user_name --dbname=some_database_name --port=5432
+
+-- Cppy from database to local csv
+-- The HEADER parameter is for adding the column headers to the CSV file
+\copy (SELECT * FROM schema_name.table_name order by col_name limit 100) TO './output_name.csv' CSV HEADER;
+
+-- Copy from a local csv to an already created table in the database
+-- The HEADER parameter is for ignoring the insertion of the csv header into the table
+\copy schema_name.table_name FROM './file_name.csv' DELIMITER ',' CSV HEADER;
+
+-- Alter a data type of a column in a table
+ALTER TABLE schema_name.table_name
+    ALTER COLUMN column_name TYPE varchar(15);
+
+-- Alter a table by dropping a column
+ALTER TABLE schema_name.table_name
+    DROP COLUMN column_name;
+
+-- Alter a table by adding a new column
+ALTER TABLE schema_name.table_name
+    ADD COLUMN column_name numeric;

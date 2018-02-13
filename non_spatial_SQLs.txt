@@ -41,3 +41,9 @@ FROM schema_name.table_name_1 as a
 LEFT JOIN schema_name.table_name_2 as b ON a.col_name = b.col_name
 WHERE b.col_name IS NULL
 
+
+------------------------------------------------------------------------
+-- 8. Selects names with distinct different ids 
+SELECT a.user_id, b.user_id, a.name
+FROM users as a join users as b
+ON (a.name = b.name and a.user_id < b.user_id);

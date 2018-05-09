@@ -1,0 +1,8 @@
+-- 1. Get the physical size of a specific table
+SELECT pg_size_pretty(pg_total_relation_size('schema_name.table_name'));
+
+------------------------------------------------------------------------
+-- 2. Get the physical size of a specifc schema
+SELECT pg_size_pretty(SUM(pg_relation_size(concat(schemaname,'.',tablename)))) AS alias FROM pg_tables WHERE schemaname='public';
+
+------------------------------------------------------------------------

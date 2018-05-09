@@ -2,32 +2,32 @@
 psql --host=xyz.amazonaws.com --username=some_user_name --dbname=some_database_name --port=5432
 
 ------------------------------------------------------------------------
--- 1. Copies from database to local csv.
+-- 2. Copies from database to local csv.
 -- The HEADER parameter is for adding the column headers to the CSV file
 \copy (SELECT * FROM schema_name.table_name order by col_name limit 100) TO './output_name.csv' CSV HEADER;
 
 ------------------------------------------------------------------------
--- 2. Copies from a local csv to an already created table in the database. 
+-- 3. Copies from a local csv to an already created table in the database. 
 -- The HEADER parameter is for ignoring the insertion of the csv header into the table
 \copy schema_name.table_name FROM './file_name.csv' DELIMITER ',' CSV HEADER;
 
 ------------------------------------------------------------------------
--- 3. Alters a data type of a column in a table
+-- 4. Alters a data type of a column in a table
 ALTER TABLE schema_name.table_name
     ALTER COLUMN column_name TYPE varchar(15);
 
 ------------------------------------------------------------------------
--- 4. Alters a table by dropping a column
+-- 5. Alters a table by dropping a column
 ALTER TABLE schema_name.table_name
     DROP COLUMN column_name;
 
 ------------------------------------------------------------------------
--- 5. Alters a table by adding a new column
+-- 6. Alters a table by adding a new column
 ALTER TABLE schema_name.table_name
     ADD COLUMN column_name numeric;
    
 ------------------------------------------------------------------------
--- 6. Selects the count of a column for each of its values 
+-- 7. Selects the count of a column for each of its values 
 select col_name, count(col_name)
 from schema_name.table_name
 group by col_name
@@ -35,7 +35,7 @@ having count(col_name) > 1
 order by count(col_name) desc;
 
 ------------------------------------------------------------------------
--- 7. Selects rows from table a where there are no matches from table b "missing foreign keys"
+-- 8. Selects rows from table a where there are no matches from table b "missing foreign keys"
 SELECT a.col_name
 FROM schema_name.table_name_1 as a
 LEFT JOIN schema_name.table_name_2 as b ON a.col_name = b.col_name
@@ -43,7 +43,7 @@ WHERE b.col_name IS NULL
 
 
 ------------------------------------------------------------------------
--- 8. Selects names with distinct different ids 
+-- 9. Selects names with distinct different ids 
 SELECT a.user_id, b.user_id, a.name
 FROM users as a join users as b
 ON (a.name = b.name and a.user_id < b.user_id);

@@ -100,3 +100,8 @@ select
 		else -999::numeric
 	end as lat
 from table_name;
+
+--------------------------------------------------------------------------------------------------
+--14. Create 1000 random point based on a polygon extent. ST_Dump will split the points in rows 
+SELECT (ST_Dump(ST_GeneratePoints(geom,1000))).geom as geom
+FROM schema.table

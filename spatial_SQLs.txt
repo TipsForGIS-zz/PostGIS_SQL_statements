@@ -80,7 +80,7 @@ update table_name set column_name = box2d(the_geom);
 --12. Calculates the areas of envelopes or bounding boxes using xMin, yMin, xMax, and yMax values in an array
 
 SELECT ST_Area(ST_MakeEnvelope(col_name[1],col_name[2],col_name[3],col_name[4],4326)) as area
-FROM nbm2.nbm2_county2016
+FROM schema.table
 
 --------------------------------------------------------------------------------------------------
 --13. Concatenate degree, minutes, seconds, and directions columns of lats and lngs. Notice two case staements to return two columns

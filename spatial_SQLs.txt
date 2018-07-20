@@ -105,3 +105,10 @@ from table_name;
 --14. Create 1000 random point based on a polygon extent. ST_Dump will split the points in rows 
 SELECT (ST_Dump(ST_GeneratePoints(geom,1000))).geom as geom
 FROM schema.table
+
+--------------------------------------------------------------------------------------------------
+--15. Change the projection of the geom column
+
+ALTER TABLE schema_name.table_name
+ALTER COLUMN geom TYPE geometry(Polygon, 42303)
+USING ST_Transform(ST_SetSRID(geom, st_srid(geom)), 42303);

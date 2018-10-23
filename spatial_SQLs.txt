@@ -2,21 +2,24 @@
 
 SELECT st_asgeojson(st_union(ST_LineMerge(the_geom)))
 from table_name
-where column_name ilike ‘%main st%’
+where column_name ilike ‘%main st%’;
 --------------------------------------------------------------------------------------------------
 
 --2. Selects intersected points with a specific polygon
 
 select pts.cartodb_id, pts.the_geom_webmercator
-from point_table as pts, polygon_table as polys
-where st_intersects(pts.the_geom, polys.the_geom) and polys.name ilike '%fairfax%'
+from point_table as pts
+join polygon_table as polys
+on (st_intersects(pts.the_geom, polys.the_geom))
+where polys.name ilike '%fairfax%'
 --------------------------------------------------------------------------------------------------
 
 --3. Checks if two geometries within the same table intersect
 
 select st_intersects(l1.the_geom,l2.the_geom)
-from line_table as l1, line_table as l2
-where l1.name ilike '%1st st%' and l2.name ilike '%main st%'
+from line_table as l1
+join line_table as l2
+on (l1.name ilike '%1st st%' and l2.name ilike '%main st%');
 --------------------------------------------------------------------------------------------------
 
 --4. Spatial join: After running this query, you can export the result as a new postGIS table containing the spatial join
@@ -41,8 +44,9 @@ set value_from_poly_column =
 
 --6. Calculates how many points intersects with each polygon from an overlaid polygon table
 SELECT polys.name, count(pnts.*)
-FROM point_table as pnts, polygon_table as polys
-where st_intersects(pnts.the_geom, polys.the_geom)
+FROM point_table as pnts
+join polygon_table as polys
+on (st_intersects(pnts.the_geom, polys.the_geom))
 group by polys.name
 order by count desc
 --------------------------------------------------------------------------------------------------

@@ -11,7 +11,7 @@ ALTER TABLE schema_name.table_name
 -- 3. Alters a table by adding a new column
 ALTER TABLE schema_name.table_name
     ADD COLUMN column_name numeric;
-   
+    
 ------------------------------------------------------------------------
 -- 4. Selects the count of a column for each of its values 
 select col_name, count(col_name)
@@ -27,9 +27,19 @@ FROM schema_name.table_name_1 as a
 LEFT JOIN schema_name.table_name_2 as b ON a.col_name = b.col_name
 WHERE b.col_name IS NULL
 
-
 ------------------------------------------------------------------------
 -- 6. Selects names with distinct different ids 
 SELECT a.user_id, b.user_id, a.name
-FROM users as a join users as b
+FROM users as a 
+join users as b
 ON (a.name = b.name and a.user_id < b.user_id);
+
+------------------------------------------------------------------------
+-- 7. Use a with clause instead of an inner query, this option will speed up the query because the with clause
+-- creates a temp view "maybe materialized" once instead of querying on every call if it an inner query
+WITH res as (select id,name from table_name where col3 in ('a','b','c'))
+SELECT id, name
+from res
+join table2
+on(....)
+

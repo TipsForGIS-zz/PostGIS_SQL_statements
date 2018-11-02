@@ -24,7 +24,8 @@ order by count(col_name) desc;
 -- 5. Selects rows from table a where there are no matches from table b "missing foreign keys"
 SELECT a.col_name
 FROM schema_name.table_name_1 as a
-LEFT JOIN schema_name.table_name_2 as b ON a.col_name = b.col_name
+LEFT JOIN schema_name.table_name_2 as b 
+ON (a.col_name = b.col_name)
 WHERE b.col_name IS NULL
 
 ------------------------------------------------------------------------

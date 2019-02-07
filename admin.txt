@@ -32,9 +32,14 @@ SELECT schemaname, tablename
 FROM pg_catalog.pg_tables 
 WHERE schemaname = 'schema_name' and tablename ilike 'bldg%';
 
-
 ------------------------------------------------------------------------
 -- 6. get columns names for a specific table
 SELECT column_name 
 FROM information_schema.columns
 WHERE table_schema = 'public' and table_name = 'county_albers';
+
+------------------------------------------------------------------------
+-- 7. get the total number of columns in a table
+SELECT COUNT(*) 
+FROM information_schema.columns 
+WHERE table_schema = 'XXX' AND table_name='YYY';

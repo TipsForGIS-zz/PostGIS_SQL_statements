@@ -11,7 +11,7 @@ select pts.cartodb_id, pts.the_geom_webmercator
 from point_table as pts
 join polygon_table as polys
 on (st_intersects(pts.the_geom, polys.the_geom))
-where polys.name ilike '%fairfax%'
+where polys.name ilike '%fairfax%';
 --------------------------------------------------------------------------------------------------
 
 --3. Checks if two geometries within the same table intersect
@@ -24,9 +24,10 @@ on (l1.name ilike '%1st st%' and l2.name ilike '%main st%');
 
 --4. Spatial join: After running this query, you can export the result as a new postGIS table containing the spatial join
 
-SELECT points.*, polys.name
-FROM point_table as points, polygon_table as polys
-where st_intersects(points.the_geom, polys.the_geom)
+SELECT pnts.*, polys.name
+FROM point_table as pnts
+JOIN polygon_table as polys
+ON (st_intersects(pnts.the_geom, pnts.the_geom));
 --------------------------------------------------------------------------------------------------
 
 --5. Spatial join: first, you create a new column in the points table, then you update its value based on the intersection
@@ -48,46 +49,37 @@ FROM point_table as pnts
 join polygon_table as polys
 on (st_intersects(pnts.the_geom, polys.the_geom))
 group by polys.name
-order by count desc
+order by count desc;
 --------------------------------------------------------------------------------------------------
 
---7. Updates a column value based on the maximum value from two other columns
-update table_name
-set new_column = 
-case when col1 > col2 then 'some value1'
-	 when col2 > col1 then 'some value2'
-	 else 'N/A'
-end
---------------------------------------------------------------------------------------------------
-
---8. Alters table to add a geometry column of type point
+--7. Alters table to add a geometry column of type point
 
 alter table table_name add column column_name geometry(Point);
 
 --------------------------------------------------------------------------------------------------
 
---9. Alters table to add a decimal column for longitude values
+--8. Alters table to add a decimal column for longitude values
 
 alter table table_name add column column_name decimal(10,7);
 
 --------------------------------------------------------------------------------------------------
---10. Updates the values of a decimal-type-column (decimal(10,7)) with the x/longitude value of the_geom
+--9. Updates the values of a decimal-type-column (decimal(10,7)) with the x/longitude value of the_geom
 
 update table_name set column_name = st_x(st_centroid(the_geom));
 
 --------------------------------------------------------------------------------------------------
---11. Updates the values of a varchar-type-column with the bounding box of the_geom
+--10. Updates the values of a varchar-type-column with the bounding box of the_geom
 
 update table_name set column_name = box2d(the_geom); 
 
 --------------------------------------------------------------------------------------------------
---12. Calculates the areas of envelopes or bounding boxes using xMin, yMin, xMax, and yMax values in an array
+--11. Calculates the areas of envelopes or bounding boxes using xMin, yMin, xMax, and yMax values in an array
 
 SELECT ST_Area(ST_MakeEnvelope(col_name[1],col_name[2],col_name[3],col_name[4],4326)) as area
-FROM schema.table
+FROM schema.table;
 
 --------------------------------------------------------------------------------------------------
---13. Concatenate degree, minutes, seconds, and directions columns of lats and lngs. Notice two case staements to return two columns
+--12. Concatenate degree, minutes, seconds, and directions columns of lats and lngs. Notice two case staements to return two columns
 select
 	case
 		when lon_dir = 'W'
@@ -106,13 +98,22 @@ select
 from table_name;
 
 --------------------------------------------------------------------------------------------------
---14. Create 1000 random point based on a polygon extent. ST_Dump will split the points in rows 
+--13. Create 1000 random point based on a polygon extent. ST_Dump will split the points in rows 
 SELECT (ST_Dump(ST_GeneratePoints(geom,1000))).geom as geom
-FROM schema.table
+FROM schema.table;
 
 --------------------------------------------------------------------------------------------------
---15. Change the projection of the geom column
+--14. Change the projection of the geom column
 
 ALTER TABLE schema_name.table_name
 ALTER COLUMN geom TYPE geometry(Polygon, 42303)
 USING ST_Transform(ST_SetSRID(geom, st_srid(geom)), 42303);
+
+--------------------------------------------------------------------------------------------------
+--15. Select points that DO NOT INTERSECT with polys using LEFT JOIN instead of ST_Disjoint
+-- since ST_Disjoint does not use a spatial index
+SELECT pnts.*
+FROM schema.pnts_table as pnts 
+LEFT JOIN schema.polys_table as polys
+ON (ST_Intersects(polys.geom, pts.geom))
+WHERE polys.id IS NULL;

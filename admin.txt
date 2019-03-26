@@ -43,3 +43,13 @@ WHERE table_schema = 'public' and table_name = 'county_albers';
 SELECT COUNT(*) 
 FROM information_schema.columns 
 WHERE table_schema = 'XXX' AND table_name='YYY';
+
+
+------------------------------------------------------------------------
+-- 8. generate DROP TABLE statement for all tables with specific prefix
+
+SELECT 'DROP TABLE schema.' || tablename || ';'
+FROM pg_tables
+WHERE schemaname = 'schema'
+AND tablename ILIKE 'bldg_%';
+

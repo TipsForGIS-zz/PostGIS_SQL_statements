@@ -117,3 +117,190 @@ FROM schema.pnts_table as pnts
 LEFT JOIN schema.polys_table as polys
 ON (ST_Intersects(polys.geom, pts.geom))
 WHERE polys.id IS NULL;
+
+--------------------------------------------------------------------------------------------------
+--16. address in building in parcel within a specific census tract
+
+with trct_addrs as
+	(select a.id as addr_id, a.geom as ageom
+	from schema.addr_table as a
+	join schema.trct_table as t
+	on(t.tract_id = 'XYZ' and st_intersects(a.geom,t.geom))),
+trct_bldgs as
+	(select b.id as bldg_id, b.geom as bgeom
+	from schema.bldg_table as b
+	join schema.trct_table as t
+	on(t.tract_id = 'XYZ' and st_intersects(b.geom,t.geom))),
+trct_prcls as
+	(select p.id as prcl_id, p.geom as pgeom
+	from schema.prcl_table as p
+	join schema.trct_table as t
+	on(t.tract_id = 'XYZ' and st_intersects(p.geom,t.geom))) 
+select addr_id,bldg_id,prcl_id 
+from trct_addrs,trct_bldgs,trct_prcls 
+where st_intersects(ageom,trct_bgeom) 
+and st_intersects(st_centroid(bgeom),pgeom)
+order by addr_id,bldg_id,prcl_id;
+
+--------------------------------------------------------------------------------------------------
+--17. address not in building but building in parcel within a specific census tract
+
+with trct_addrs as
+	(select a.id as addr_id, a.geom as ageom
+	from schema.addr_table as a
+	join schema.trct_table as t
+	on(t.tract_id = 'XYZ' and st_intersects(a.geom,t.geom))),
+trct_bldgs as
+	(select b.id as bldg_id, b.geom as bgeom
+	from schema.bldg_table as b
+	join schema.trct_table as t
+	on(t.tract_id = 'XYZ' and st_intersects(b.geom,t.geom))),
+trct_prcls as
+	(select p.id as prcl_id, p.geom as pgeom
+	from schema.prcl_table as p
+	join schema.trct_table as t
+	on(t.tract_id = 'XYZ' and st_intersects(p.geom,t.geom))),
+prcl_with_one_bldg as(
+	with prcl_bldg_grpby as
+		(select prcl_id, pgeom, count(bldg_id)
+		from trct_prcls,trct_bldgs
+		where st_contains(pgeom,bgeom)
+		group by prcl_id, pgeom
+		having count(bldg_id) = 1)
+	select bldg_id, prcl_id, pgeom
+	from trct_bldgs
+	join prcl_bldg_grpby
+	on (st_within(bgeom,pgeom))),
+addr_not_in_bldg as
+	(select addr_key, ageom
+ 	from trct_addrs
+	left join trct_bldgs
+	on(st_intersects(ageom,bgeom))
+	where bldg_id is null)											 
+select DISTINCT ON(addr_id) addr_id,bldg_id,prcl_id
+from addr_not_in_bldg, prcl_with_one_bldg
+where st_intersects(pgeom,ageom)
+order by addr_id,bldg_id,prcl_id;
+
+--------------------------------------------------------------------------------------------------
+--18. address not in building but multi-building in parcel within a specific census tract
+
+with trct_addrs as
+	(select a.id as addr_id, a.geom as ageom
+	from schema.addr_table as a
+	join schema.trct_table as t
+	on(t.tract_id = 'XYZ' and st_intersects(a.geom,t.geom))),
+trct_bldgs as
+	(select b.id as bldg_id, b.geom as bgeom
+	from schema.bldg_table as b
+	join schema.trct_table as t
+	on(t.tract_id = 'XYZ' and st_intersects(b.geom,t.geom))),
+trct_prcls as
+	(select p.id as prcl_id, p.geom as pgeom
+	from schema.prcl_table as p
+	join schema.trct_table as t
+	on(t.tract_id = 'XYZ' and st_intersects(p.geom,t.geom))),
+addr_in_prcl_multi_bldg as
+	   (with prcl_bldg_grpby as
+			(select prcl_id, pgeom, count(bldg_id)
+			from trct_prcls,trct_bldgs
+			where st_contains(pgeom,bgeom)
+			group by prcl_id, pgeom
+			having count(bldg_id) > 1),
+		addr_not_in_bldg as
+			(select addr_id, ageom
+			from trct_addrs
+			left join trct_bldgs
+			on(st_intersects(ageom,bgeom))
+			where bldg_id is null)
+		select distinct on(addr_id) addr_id, prcl_id, ageom
+		from prcl_bldg_grpby, addr_not_in_bldg
+		where st_intersects(ageom,pgeom))			
+select distinct on (addr_id) addr_id, bldg_id, prcl_id
+from addr_in_prcl_multi_bldg
+join trct_bldgs
+on (st_dwithin(ageom,bgeom,100))
+order by addr_id, st_distance(ageom,bgeom);
+
+--------------------------------------------------------------------------------------------------
+--19. address close to parcel with one building in parcel within a specific census tract
+
+with trct_addrs as
+	(select a.id as addr_id, a.geom as ageom
+	from schema.addr_table as a
+	join schema.trct_table as t
+	on(t.tract_id = 'XYZ' and st_intersects(a.geom,t.geom))),
+trct_bldgs as
+	(select b.id as bldg_id, b.geom as bgeom
+	from schema.bldg_table as b
+	join schema.trct_table as t
+	on(t.tract_id = 'XYZ' and st_intersects(b.geom,t.geom))),
+trct_prcls as
+	(select p.id as prcl_id, p.geom as pgeom
+	from schema.prcl_table as p
+	join schema.trct_table as t
+	on(t.tract_id = 'XYZ' and st_intersects(p.geom,t.geom))),
+one_bldg_in_prcl as
+	(with prcl_bldg_grpby as
+	 	(select prcl_id, pgeom, count(bldg_id)
+		from trct_prcls,trct_bldgs
+		where st_contains(pgeom,bgeom)
+		group by prcl_id, pgeom
+		having count(bldg_id) = 1)
+	select bldg_id, prcl_id, pgeom
+	from trct_bldgs
+	join prcl_bldg_grpby
+	on (st_within(bgeom,pgeom))),
+addr_not_in_prcl as
+	(select addr_id, ageom
+ 	from trct_addrs
+	left join trct_prcls
+	on(st_intersects(ageom,pgeom))
+	where prcl_id is null)											 
+select DISTINCT ON(addr_id) addr_id,bldg_id,prcl_id
+from addr_not_in_prcl
+join one_bldg_in_prcl
+on (st_dwithin(ageom,pgeom,100))
+order by addr_id, st_distance(ageom,pgeom);
+
+--------------------------------------------------------------------------------------------------
+--20. address close to parcel with multi-building in parcel within a specific census tract
+
+with trct_addrs as
+	(select a.id as addr_id, a.geom as ageom
+	from schema.addr_table as a
+	join schema.trct_table as t
+	on(t.tract_id = 'XYZ' and st_intersects(a.geom,t.geom))),
+trct_bldgs as
+	(select b.id as bldg_id, b.geom as bgeom
+	from schema.bldg_table as b
+	join schema.trct_table as t
+	on(t.tract_id = 'XYZ' and st_intersects(b.geom,t.geom))),
+trct_prcls as
+	(select p.id as prcl_id, p.geom as pgeom
+	from schema.prcl_table as p
+	join schema.trct_table as t
+	on(t.tract_id = 'XYZ' and st_intersects(p.geom,t.geom))),
+addr_in_prcl_multi_bldg as
+	   (with prcl_bldg_grpby as
+			(select prcl_id, pgeom, count(bldg_id)
+			from trct_prcls,trct_bldgs
+			where st_contains(pgeom,bgeom)
+			group by prcl_id, pgeom
+			having count(bldg_id) > 1),
+		addr_not_in_prcl as 
+			(select addr_id, ageom
+			from trct_addrs
+			left join trct_prcls
+			on(st_intersects(ageom,pgeom))
+			where prcl_id is null)
+		select distinct on(addr_id) addr_id, prcl_id, ageom
+		from prcl_bldg_grpby, addr_not_in_prcl
+		where st_dwithin(ageom,pgeom,100)
+		order by addr_id, st_distance(ageom,pgeom))
+		--where st_intersects(ageom,pgeom))			
+select distinct on (addr_id) addr_id, bldg_id, prcl_id
+from addr_in_prcl_multi_bldg
+join trct_bldgs
+on (st_dwithin(ageom,bgeom,100))
+order by addr_id, st_distance(ageom,bgeom);

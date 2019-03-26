@@ -304,3 +304,45 @@ from addr_in_prcl_multi_bldg
 join trct_bldgs
 on (st_dwithin(ageom,bgeom,100))
 order by addr_id, st_distance(ageom,bgeom);
+
+--------------------------------------------------------------------------------------------------
+--21. recursively walk a network
+
+WITH RECURSIVE walk_network(id, segment) AS (
+  SELECT id, segment 
+    FROM schema.paul_ramsey_network 
+    WHERE id = 6
+  UNION ALL
+  SELECT n.id, n.segment
+    FROM schema.paul_ramsey_network n, walk_network w
+    WHERE ST_DWithin(
+      ST_EndPoint(w.segment),
+      ST_StartPoint(n.segment),0.01)
+)
+SELECT id
+FROM walk_network;
+
+
+--------------------------------------------------------------------------------------------------
+--22. get raster pixel values where intersected with a given point vector table
+
+select r.rid, st_value(r.rast,p.geom) as raster_val
+from schema.raster_table as r
+join schema.point_table as p
+on (st_intersects(r.rast,p.geom));
+
+
+--------------------------------------------------------------------------------------------------
+--23. get reasons of geom invalidity in a table 
+
+select gid, ST_IsValidReason(geom)
+from schema.table
+where st_isvalid(geom) is false;
+
+--------------------------------------------------------------------------------------------------
+--24. validate invalid geoms by either st_makevalid or st_buffer by 0
+
+UPDATE schema.table
+SET geom = st_makevalid(geom)
+-- geom = st_buffer(geom,0)
+WHERE st_isvalid(geom) is false;
